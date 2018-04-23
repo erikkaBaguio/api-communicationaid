@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from app import app
 
-app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:regards@localhost/db'
 app.config['SECRET_KEY'] = 'hard to guess string'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -11,7 +11,7 @@ db = SQLAlchemy(app)
 class Account(db.Model):
     acc_id = db.Column(db.Integer, primary_key=True)
     acc_type = db.Column(db.Integer, unique=True)
-    username = db.Column(db.String(50), unique=True)
+    username = db.Column(db.String(60), unique=True)
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(150), unique=True)
     acc_p = db.relationship("Parent", uselist=False, backref="account")
