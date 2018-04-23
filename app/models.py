@@ -7,15 +7,6 @@ app.config['SECRET_KEY'] = 'hard to guess string'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
 
-# relationship between specifics and logs
-activity = db.Table('activity',
-                    db.Column('spec_num', db.Integer, db.ForeignKey('specifics.spec_num')),
-                    db.Column('log_num', db.Integer, db.ForeignKey('logs.log_num'))
-                    )
-report = db.Table('report',
-                    db.Column('item_num', db.Integer, db.ForeignKey('items.item_num')),
-                    db.Column('prog_num', db.Integer, db.ForeignKey('progress.prog_num'))
-                  )
 
 class Account(db.Model):
     acc_id = db.Column(db.Integer, primary_key=True)
@@ -116,8 +107,8 @@ class Personal(db.Model):
 class Specifics(db.Model):
     spec_num = db.Column(db.Integer, primary_key=True)
     spec_name = db.Column(db.String(50))
-    act = db.relationship('Logs', secondary=activity, backref=db.backref('act', lazy='dynamic'))
-    specify_id = db.Column(db.Integer, db.ForeignKey('personal.per_num'))
+    per_id = db.Column(db.Integer, db.ForeignKey('personal.per_num'))
+    log = db.relationship('Logs', backref='logs', lazy='dynamic')
 
     def __init__(self, spec_name):
         self.spec_name = spec_name
@@ -130,6 +121,7 @@ class Logs(db.Model):
     clicks = db.Column(db.Integer)
     log_date = db.Column(db.Date)
     log_time = db.Column(db.Time)
+    spec_id = db.Column(db.Integer, db.ForeignKey('specifics.spec_num'))
 
     def __init__(self, clicks, log_date, log_time):
         self.clicks = clicks
@@ -154,6 +146,7 @@ class Educational(db.Model):
     ed_num = db.Column(db.Integer, primary_key=True)
     subject = db.Column(db.String(50))
     edu_id = db.Column(db.Integer, db.ForeignKey('class.class_num'))
+    prog = db.relationship('Progress', backref='progs', lazy='dynamic')
 
     def __init__(self, subject):
         self.subject = subject
@@ -163,8 +156,7 @@ class Educational(db.Model):
 
 class Items(db.Model):
     item_num = db.Column(db.Integer, primary_key=True)
-    desc = db.Column(db.String(120)),
-    rep = db.relationship('Progress', secondary=report, backref=db.backref('rep', lazy='dynamic'))
+    desc = db.Column(db.String(120))
 
     def __init__(self, desc):
         self.desc = desc
@@ -174,10 +166,12 @@ class Items(db.Model):
 
 class Progress(db.Model):
     prog_num = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200))
     details = db.Column(db.String(500))
     prog_date = db.Column(db.Date)
     prog_time = db.Column(db.Time)
     score = db.Column(db.Integer)
+    edu_id = db.Column(db.Integer, db.ForeignKey('educational.ed_num'))
 
     def __init__(self, details, prog_date, prog_time, score):
         self.details = details
