@@ -32,7 +32,7 @@ def progress():
     return jsonify({'status': 'successfuly added!'})
 #view progress report
 @app.route('/api/educational/progress/<prog_num>', methods=['GET'])
-def getinfochild(prog_num):
+def getprogress(prog_num):
     prog = Progress.query.filter_by(prog_num=prog_num).first()
     if not prog:
         return jsonify({'message': "no progress found"})
