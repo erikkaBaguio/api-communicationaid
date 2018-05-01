@@ -22,14 +22,18 @@ def getoneuser(acc_id):
     return jsonify({'user': user_data})
 
 # educational logs
-#post progress report
-@app.route('/api/educational/progress', methods=['POST'])
-def progress():
+#api for posting progress report
+@app.route('/api/educational/progress/<edu_id>', methods=['POST'])
+def progress(edu_id):
+    Progress.query.filter_by(edu_id=int(edu_id)).first()
     data = request.get_json()
-    new_data = Progress(details=data['details'],title=data['title'],  prog_date=data['prog_date'], prog_time=data['prog_time'],  score=data['score'])
-    db.session.add(new_data)
+
+    myProgress = Progress(title=data['title'], details=data['details'], prog_date=datetime.datetime.now(), prog_time=datetime.datetime.now(), score=data['score'])
+
+    db.session.add(myProgress)
     db.session.commit()
-    return jsonify({'status': 'successfuly added!'})
+    return jsonify({'data': myProgress, 'status': 'ok'})
+
 #view progress report
 @app.route('/api/educational/progress/<prog_num>', methods=['GET'])
 def getprogress(prog_num):
