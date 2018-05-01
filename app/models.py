@@ -1,17 +1,18 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from app import app
 
+app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:regards@localhost/db'
 app.config['SECRET_KEY'] = 'hard to guess string'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
 db = SQLAlchemy(app)
 
 
 class Account(db.Model):
     acc_id = db.Column(db.Integer, primary_key=True)
     acc_type = db.Column(db.Integer, unique=True)
-    username = db.Column(db.String(60), unique=True)
+    username = db.Column(db.String(50), unique=True)
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(150), unique=True)
     acc_p = db.relationship("Parent", uselist=False, backref="account")
@@ -45,11 +46,12 @@ class Parent(db.Model):
     acc_id = db.Column(db.Integer, db.ForeignKey('account.acc_id'))
     child = db.relationship("Child", uselist=False, backref="parent")
 
-    def __init__(self, fname_p, lname_p, bday_p, add_p):
-        self.fname_p = fname_p
-        self.lname_p = lname_p
-        self.bday_p = bday_p
-        self.add_p = add_p
+    def __init__(self, acc_id):
+        self.fname_p = None
+        self.lname_p = None
+        self.bday_p = None
+        self.add_p = None
+        self.acc_id = acc_id
 
     def __repr__(self):
         return '<Parent %r>' % self.fname_p
@@ -81,13 +83,14 @@ class Teacher(db.Model):
     add_t = db.Column(db.String(120))
     acc_id = db.Column(db.Integer, db.ForeignKey('account.acc_id'))
 
-    def __init__(self, fname_t, lname_t, bday_t, specialty, tel_num, add_t):
-        self.fname_t = fname_t
-        self.lname_t = lname_t
-        self.bday_t = bday_t
-        self.specialty = specialty
-        self.tel_num = tel_num
-        self.add_t = add_t
+    def __init__(self, acc_id):
+        self.fname_t = None
+        self.lname_t = None
+        self.bday_t = None
+        self.specialty = None
+        self.tel_num = None
+        self.add_t = None
+        self.acc_id = acc_id
 
     def __repr__(self):
         return '<Teacher %r>' % self.fname_t
@@ -205,3 +208,5 @@ db.create_all()
 
 if __name__ == '__main__':
     app.run()
+
+

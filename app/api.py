@@ -7,7 +7,34 @@ from models import *
 import json
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_marshmallow import Marshmallow
 from app import app
+ma = Marshmallow(app)
+
+
+from SimpleHTTPServer import SimpleHTTPRequestHandler, test
+
+
+class DirectorySchema(ma.Schema):
+    class Meta:
+        fields = ('name', 'contact', 'address')
+
+directory_schema = DirectorySchema()
+directories_schema = DirectorySchema(many=True)
+
+class ClassSchema(ma.Schema):
+    class Meta:
+        fields = ('class_num','class_name')
+
+class_schema = ClassSchema()
+classes_schema = ClassSchema(many=True)
+
+
+@app.route('/api/user', methods=['GET'])
+def get_allUser():
+    all_users = Account.query.all()
+    result = users_schema.dump(all_users)
+    return jsonify(result.data)
 
 #retrieve data for parent,child and teacher
 
@@ -77,70 +104,140 @@ def token_required(f):
         return f(current_user, *args,**kwargs)
     return decorated
 
+   
     #edit profile -----------------------------
 
 @app.route('/api/parent/editprofile/<int:acc_id>', methods=['POST']) #this api is for editing parent's profile 
 def update_parentinfo(acc_id):
 # @token_required
-	Parent.query.filter_by(acc_id=int(acc_id)).first()
-	data = request.get_json()
+    Parent.query.filter_by(acc_id=int(acc_id)).first()
+    data = request.get_json()
 
-	output = Parent(fname_p = data['fname_p'], lname_p = data['lname_p'], bday_p = data['bday_p'], add_p = data['add_p'])
+    output = Parent(fname_p = data['fname_p'], lname_p = data['lname_p'], bday_p = data['bday_p'], add_p = data['add_p'])
 
-	output = db.session.merge(output)
-	db.session.add(output)
-	db.session.commit()
-	return jsonify({'message' : 'success!'})
+    output = db.session.merge(output)
+    db.session.add(output)
+    db.session.commit()
+    return jsonify({'message' : 'success!'})
 
 
 @app.route('/api/child/editprofile/<int:c_id>', methods=['POST']) #this api is for editing child's profile
 def update_childinfo(c_id):
 # @token_required
-	Child.query.filter_by(acc_id=int(c_id)).first()
-	data = request.get_json()
+    Child.query.filter_by(acc_id=int(c_id)).first()
+    data = request.get_json()
 
-	output = Child(fname_c = data['fname_c'], lname_c = data['lname_c'], bday_c = data['bday_c'], diagnosis = data['diagnosis'])
+    output = Child(fname_c = data['fname_c'], lname_c = data['lname_c'], bday_c = data['bday_c'], diagnosis = data['diagnosis'])
 
-	output = db.session.merge(output)
-	db.session.add(output)
-	db.session.commit()
-	return jsonify({'message' : 'success!'})
+    output = db.session.merge(output)
+    db.session.add(output)
+    db.session.commit()
+    return jsonify({'message' : 'success!'})
 
 @app.route('/api/teacher/editprofile/<int:acc_id>', methods=['POST']) #this api is for editing teacher's profile
 def update_teacherinfo(c_id):
 # @token_required
-	Teacher.query.filter_by(acc_id=int(c_id)).first()
-	data = request.get_json()
+    Teacher.query.filter_by(acc_id=int(c_id)).first()
+    data = request.get_json()
 
-	output = Teacher(fname_t = data['fname_t'], lname_t = data['lname_t'], bday_t = data['bday_c'], specialty = data['specialty'],tel_num = data['tel_num'], add_t = data['add_t'])
+    output = Teacher(fname_t = data['fname_t'], lname_t = data['lname_t'], bday_t = data['bday_c'], specialty = data['specialty'],tel_num = data['tel_num'], add_t = data['add_t'])
 
-	output = db.session.merge(output)
-	db.session.add(output)
-	db.session.commit()
-	return jsonify({'message' : 'success!'})
+    output = db.session.merge(output)
+    db.session.add(output)
+    db.session.commit()
+    return jsonify({'message' : 'success!'})
+
+
 
 @app.route('/api/signup', methods=['POST'])
 def createuser():
-	data = request.get_json()
-	hashed_password = generate_password_hash(data['password'], method='sha256')
-	new_acc = Account(acc_type=data['acc_type'], username = data['username'],email=data['email'], password = hashed_password)
+    data = request.get_json()
+    hashed_password = generate_password_hash(data['password'], method='sha256')
+    new_acc = Account(acc_type=int(data['acc_type']), username=data['username'], email=data['email'], password=hashed_password)
+    db.session.add(new_acc)
+    db.session.commit()
 
-	db.session.add(new_acc)
-	db.session.commit()
-	return jsonify({'message' : 'New user created.'})
+    if data['acc_type']:
+        acc_1 = Account.query.filter_by(acc_type=int(data['acc_type'])).order_by(desc(Account.acc_id)).first()
+        if int(data['acc_type'])==1:
+            teacher_or_parent = Teacher(acc_id=acc_1.acc_id)
+        else:
+            teacher_or_parent = Parent(acc_id=acc_1.acc_id)
+
+        db.session.add(teacher_or_parent)
+        db.session.commit()
+
+    return jsonify({'message' : 'New user created.'})
 
 @app.route('/api/login', methods=['POST'])
 def login_api():
 
-	auth = request.authorization
-	if not auth or not auth.username or not auth.password:
-		return make_response('un authenticated', 401, {'WWW-Authenticate' : 'Login required'})
-	user = Account.query.filter_by(username=auth.username).first()
+    auth = request.authorization
+    if not auth or not auth.username or not auth.password:
+        return make_response('un authenticated', 401, {'WWW-Authenticate' : 'Login required'})
+    user = Account.query.filter_by(username=auth.username).first()
 
-	if not user:
-		return jsonify('User not found', 401, {'WWW-Authenticate' : 'Login required'})
+    if not user:
+        return jsonify('User not found', 401, {'WWW-Authenticate' : 'Login required'})
 
-	if check_password_hash(user.password,auth.password):
-		token = jwt.encode({'account_id': Account.acc_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
-		return jsonify({'status': 'ok', 'token': token.decode('UTF-8')})
-	return make_response('Could not verify', {'WWW-Authenticate' : 'Login required'})
+    if check_password_hash(user.password,auth.password):
+        token = jwt.encode({'account_id': Account.acc_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        return jsonify({'status': 'ok', 'token': token.decode('UTF-8')})
+    return make_response('Could not verify', {'WWW-Authenticate' : 'Login required'})
+
+@app.route('/api/add_class', methods=['POST'])
+def enroll():
+    data = request.get_json()
+    new_class = Class(class_name=data['classname'])
+
+    db.session.add(new_class)
+    db.session.commit()
+    return jsonify({'message' : 'New user created.'})
+
+@app.route('/api/class', methods=['GET'])
+def clsses():
+    all_data = Class.query.all()
+    result = classes_schema.dump(all_data)
+    return jsonify(result.data)
+
+
+@app.route('/api/add_directory', methods=['POST'])
+def direc2ry():
+    data = request.get_json()
+    new_contact = Directory(name=data['name'], contact=data['contact'], address=data['address'],)
+
+    db.session.add(new_contact)
+    db.session.commit()
+    return jsonify({'message' : 'New contact added'})
+
+@app.route('/api/directory', methods=['GET'])
+def directory():
+    all_data = Directory.query.all()
+    result = directories_schema.dump(all_data)
+    return jsonify(result.data)
+
+@app.route('/')
+def index():
+    try:
+        raise Exception("Can't connect to database")
+    except Exception,e:
+        track= get_current_traceback(skip=1, show_hidden_frames=True,
+            ignore_system_exceptions=False)
+        track.log()
+        abort(500)
+    return "index"
+
+@app.errorhandler(500)
+def internal_error(error):
+
+    return "500 error"
+
+@app.errorhandler(404)
+def not_found(error):
+    return "404 error",404
+
+class CORSHTTPRequestHandler(SimpleHTTPRequestHandler):
+
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        super(CORSHTTPRequestHandler, self).end_headers(self)

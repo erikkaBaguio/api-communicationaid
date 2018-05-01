@@ -1,4 +1,14 @@
 SQLAlchemy
-Flask-sqlAlchemy
+Flask-SQLAlchemy
 psycopg2
 Flask
+Flask-Mail
+Flask-Script
+Flask-Migrate
+Flask-Compress
+Flask-Marshmallow
+psycopg2
+Flask-BasicAuth
+Flask-Cors
+Werkzeug
+PyJWT
