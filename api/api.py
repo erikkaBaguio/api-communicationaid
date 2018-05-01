@@ -21,8 +21,8 @@ def getoneuser(acc_id):
     user_data['acc_type'] = user.acc_type
     return jsonify({'user': user_data})
 
-
-
+# educational logs
+#post progress report
 @app.route('/api/educational/progress', methods=['POST'])
 def progress():
     data = request.get_json()
@@ -30,3 +30,16 @@ def progress():
     db.session.add(new_data)
     db.session.commit()
     return jsonify({'status': 'successfuly added!'})
+#view progress report
+@app.route('/api/educational/progress/<prog_num>', methods=['GET'])
+def getinfochild(prog_num):
+    prog = Progress.query.filter_by(prog_num=prog_num).first()
+    if not prog:
+        return jsonify({'message': "no progress found"})
+    user_data = {}
+    user_data['title'] = prog.title
+    user_data['details'] = prog.details
+    user_data['prog_date'] = prog.prog_date
+    user_data['prog_time'] = prog.prog_time
+    user_data['score'] = prog.score
+    return jsonify({'prog': user_data})
