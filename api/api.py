@@ -352,6 +352,17 @@ def del_directory(req_id):
     result = directories_schema.dump(all_data)
     return jsonify(result.data)
 
+# @app.route('/api/directory=<int:d_id>', methods=['GET'])
+# def dir_search(d_id):
+#     directory = Directory.query.filter_by(dir_id=d_id).first()
+#     if not directory:
+#         return jsonify({'message': "no user found"})
+#     dir_data = {}
+#     dir_data['dir_id'] = directory.dir_id
+#     dir_data['name'] = directory.name
+#     dir_data['address'] = directory.address
+#     dir_data['contact'] = directory.contact
+#     return jsonify({'contact_info': dir_data})
 
 @app.errorhandler(500)
 def internal_error(error):

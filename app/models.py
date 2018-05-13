@@ -2,9 +2,24 @@ from app import *
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+<<<<<<< HEAD:api/models.py
 class Account(db.Model):
     acc_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(60), unique=True)
+=======
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:regards@localhost/db'
+app.config['SECRET_KEY'] = 'hard to guess string'
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
+db = SQLAlchemy(app)
+
+
+class Account(db.Model):
+    acc_id = db.Column(db.Integer, primary_key=True)
+    acc_type = db.Column(db.Integer, unique=True)
+    username = db.Column(db.String(50), unique=True)
+>>>>>>> 3180fb0cd735767f1568d17c8b7773bc76d68e52:app/models.py
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(150))
     acc_type = db.Column(db.Integer)
@@ -99,6 +114,17 @@ class Personal(db.Model):
     def __repr__(self):
         return '<Personal %r>' % self.per_name
 
+<<<<<<< HEAD:api/models.py
+=======
+class Specifics(db.Model):
+    spec_num = db.Column(db.Integer, primary_key=True)
+    spec_name = db.Column(db.String(50))
+    per_id = db.Column(db.Integer, db.ForeignKey('personal.per_num'))
+    log = db.relationship('Logs', backref='logs', lazy='dynamic')
+
+    def __init__(self, spec_name):
+        self.spec_name = spec_name
+>>>>>>> 3180fb0cd735767f1568d17c8b7773bc76d68e52:app/models.py
 
 
 class Logs(db.Model):
@@ -106,6 +132,7 @@ class Logs(db.Model):
     clicks = db.Column(db.Integer)
     log_date = db.Column(db.Date)
     log_time = db.Column(db.Time)
+    spec_id = db.Column(db.Integer, db.ForeignKey('specifics.spec_num'))
 
     def __init__(self, clicks, log_date, log_time):
         self.clicks = clicks
@@ -145,12 +172,28 @@ class Educational(db.Model):
     ed_num = db.Column(db.Integer, primary_key=True)
     subject = db.Column(db.String(50))
     edu_id = db.Column(db.Integer, db.ForeignKey('class.class_num'))
+    prog = db.relationship('Progress', backref='progs', lazy='dynamic')
 
     def __init__(self, subject):
         self.subject = subject
 
     def __repr__(self):
+<<<<<<< HEAD:api/models.py
         return '<Educational %r>' % self.subject
+=======
+        return '<Educational %r>' % self.per_subject
+
+class Items(db.Model):
+    item_num = db.Column(db.Integer, primary_key=True)
+    desc = db.Column(db.String(120))
+
+    def __init__(self, desc):
+        self.desc = desc
+
+    def __repr__(self):
+        return '<Items %r>' % self.desc
+
+>>>>>>> 3180fb0cd735767f1568d17c8b7773bc76d68e52:app/models.py
 class Progress(db.Model):
     prog_num = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
@@ -204,4 +247,10 @@ class Audio(db.Model):
         return '<Audio %r>' % self.aud
 
 if __name__ == '__main__':
+<<<<<<< HEAD:api/models.py
     app.run()
+=======
+    app.run()
+
+
+>>>>>>> 3180fb0cd735767f1568d17c8b7773bc76d68e52:app/models.py
