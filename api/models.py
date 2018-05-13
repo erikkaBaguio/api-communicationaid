@@ -1,28 +1,13 @@
+from app import *
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:regards@localhost/db'
-app.config['SECRET_KEY'] = 'hard to guess string'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-db = SQLAlchemy(app)
-
-# relationship between specifics and logs
-activity = db.Table('activity',
-                    db.Column('spec_num', db.Integer, db.ForeignKey('specifics.spec_num')),
-                    db.Column('log_num', db.Integer, db.ForeignKey('logs.log_num'))
-                    )
-report = db.Table('report',
-                    db.Column('item_num', db.Integer, db.ForeignKey('items.item_num')),
-                    db.Column('prog_num', db.Integer, db.ForeignKey('progress.prog_num'))
-                  )
-
 class Account(db.Model):
     acc_id = db.Column(db.Integer, primary_key=True)
-    acc_type = db.Column(db.Integer, unique=True)
     username = db.Column(db.String(60), unique=True)
     email = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String(150), unique=True)
+    password = db.Column(db.String(150))
+    acc_type = db.Column(db.Integer)
     acc_p = db.relationship("Parent", uselist=False, backref="account")
     acc_t = db.relation("Teacher", uselist=False, backref="account")
 
@@ -31,7 +16,6 @@ class Account(db.Model):
         self.username = username
         self.email = email
         self.password = password
-
     def __repr__(self):
         return '<Account %r>' % self.acc_type
 
@@ -54,11 +38,12 @@ class Parent(db.Model):
     acc_id = db.Column(db.Integer, db.ForeignKey('account.acc_id'))
     child = db.relationship("Child", uselist=False, backref="parent")
 
-    def __init__(self, fname_p, lname_p, bday_p, add_p):
-        self.fname_p = fname_p
-        self.lname_p = lname_p
-        self.bday_p = bday_p
-        self.add_p = add_p
+    def __init__(self, acc_id):
+        self.fname_p = None
+        self.lname_p = None
+        self.bday_p = None
+        self.add_p = None
+        self.acc_id = acc_id
 
     def __repr__(self):
         return '<Parent %r>' % self.fname_p
@@ -90,13 +75,14 @@ class Teacher(db.Model):
     add_t = db.Column(db.String(120))
     acc_id = db.Column(db.Integer, db.ForeignKey('account.acc_id'))
 
-    def __init__(self, fname_t, lname_t, bday_t, specialty, tel_num, add_t):
-        self.fname_t = fname_t
-        self.lname_t = lname_t
-        self.bday_t = bday_t
-        self.specialty = specialty
-        self.tel_num = tel_num
-        self.add_t = add_t
+    def __init__(self, acc_id):
+        self.fname_t = None
+        self.lname_t = None
+        self.bday_t = None
+        self.specialty = None
+        self.tel_num = None
+        self.add_t = None
+        self.acc_id = acc_id
 
     def __repr__(self):
         return '<Teacher %r>' % self.fname_t
@@ -113,17 +99,7 @@ class Personal(db.Model):
     def __repr__(self):
         return '<Personal %r>' % self.per_name
 
-class Specifics(db.Model):
-    spec_num = db.Column(db.Integer, primary_key=True)
-    spec_name = db.Column(db.String(50))
-    act = db.relationship('Logs', secondary=activity, backref=db.backref('act', lazy='dynamic'))
-    specify_id = db.Column(db.Integer, db.ForeignKey('personal.per_num'))
 
-    def __init__(self, spec_name):
-        self.spec_name = spec_name
-
-    def __repr__(self):
-        return '<Specifics %r>' % self.spec_name
 
 class Logs(db.Model):
     log_num = db.Column(db.Integer, primary_key=True)
@@ -138,7 +114,22 @@ class Logs(db.Model):
 
     def __repr__(self):
         return '<Logs %r>' % self.clicks
+activity = db.Table('activity',
+                    db.Column('spec_num', db.Integer, db.ForeignKey('specifics.spec_num')),
+                    db.Column('log_num', db.Integer, db.ForeignKey('logs.log_num'))
+                    )
 
+class Specifics(db.Model):
+    spec_num = db.Column(db.Integer, primary_key=True)
+    spec_name = db.Column(db.String(50))
+    act = db.relationship('Logs', secondary=activity, backref=db.backref('act', lazy='dynamic'))
+    specify_id = db.Column(db.Integer, db.ForeignKey('personal.per_num'))
+
+    def __init__(self, spec_name):
+        self.spec_name = spec_name
+
+    def __repr__(self):
+        return '<Specifics %r>' % self.spec_name
 class Class(db.Model):
     class_num = db.Column(db.Integer, primary_key=True)
     class_name = db.Column(db.String(50))
@@ -159,7 +150,29 @@ class Educational(db.Model):
         self.subject = subject
 
     def __repr__(self):
-        return '<Educational %r>' % self.per_subject
+        return '<Educational %r>' % self.subject
+class Progress(db.Model):
+    prog_num = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200))
+    details = db.Column(db.String(500))
+    prog_date = db.Column(db.Date)
+    prog_time = db.Column(db.Time)
+    score = db.Column(db.Integer)
+    edu_id = db.Column(db.Integer, db.ForeignKey('educational.ed_num'))
+
+    def __init__(self, title, details, prog_date, prog_time, score):
+        self.title = title
+        self.details = details
+        self.prog_date = prog_date
+        self.prog_time = prog_time
+        self.score = score
+    def __repr__(self):
+        return '<Progress %r>' % self.title
+
+report = db.Table('report',
+                    db.Column('item_num', db.Integer, db.ForeignKey('items.item_num')),
+                    db.Column('prog_num', db.Integer, db.ForeignKey('progress.prog_num'))
+                  )
 
 class Items(db.Model):
     item_num = db.Column(db.Integer, primary_key=True)
@@ -172,22 +185,6 @@ class Items(db.Model):
     def __repr__(self):
         return '<Items %r>' % self.desc
 
-class Progress(db.Model):
-    prog_num = db.Column(db.Integer, primary_key=True)
-    details = db.Column(db.String(500))
-    prog_date = db.Column(db.Date)
-    prog_time = db.Column(db.Time)
-    score = db.Column(db.Integer)
-
-    def __init__(self, details, prog_date, prog_time, score):
-        self.details = details
-        self.prog_date = prog_date
-        self.prog_time = prog_time
-        self.score = score
-
-    def __repr__(self):
-        return '<Progress %r>' % self.details
-
 class Images(db.Model):
     img_id = db.Column(db.Integer, primary_key=True)
     img = db.Column(db.String(50))
@@ -197,17 +194,14 @@ class Images(db.Model):
 
     def __repr__(self):
         return '<Images %r>' % self.img
+
 class Audio(db.Model):
     aud_id = db.Column(db.Integer, primary_key=True)
     aud = db.Column(db.String(50))
-
     def __init__(self, aud):
         self.aud = aud
-
     def __repr__(self):
         return '<Audio %r>' % self.aud
-
-db.create_all()
 
 if __name__ == '__main__':
     app.run()
