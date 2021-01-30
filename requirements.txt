@@ -1,5 +1,5 @@
-SQLAlchemy
 Flask-SQLAlchemy
+SQLAlchemy
 psycopg2
 Flask
 Flask-Mail
@@ -12,3 +12,6 @@ Flask-BasicAuth
 Flask-Cors
 Werkzeug
 PyJWT
+marshmallow-sqlalchemy
+functools32
+
